@@ -3,6 +3,7 @@ package db
 import (
 	"encoding/binary"
 	"fmt"
+	"strconv"
 
 	"github.com/boltdb/bolt"
 )
@@ -23,14 +24,27 @@ func AddTask(value string) error {
 	return nil
 }
 
-// Delete a task
-func DelTask() {
+// Do a task
+func DoTask(value string) error {
+
+	// string -> int -> []byte
+	i, err := strconv.Atoi(value)
+	if err != nil {
+		fmt.Println("Could not pass argument.")
+	}
+	ib := itob(i)
+
+	return db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Tasks"))
+		err := b.Delete(ib)
+		return err
+	})
 
 }
 
 // Get all tasks in one bucket
 func GetTasks() error {
-	db.View(func(tx *bolt.Tx) error {
+	return db.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		b := tx.Bucket([]byte("Tasks"))
 		c := b.Cursor()
@@ -42,7 +56,7 @@ func GetTasks() error {
 
 		return nil
 	})
-	return nil
+
 }
 
 // Convert int to byte
